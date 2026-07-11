@@ -1,0 +1,61 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | StudySync</title>
+    <link rel="stylesheet" href="register.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo-link">
+                <img src="https://raw.githubusercontent.com/saatwikdas69420/vs-hacks/main/full-logo.png" alt="StudySync Logo" class="nav-logo">
+            </a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-btn btn-secondary">Back to Home</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="register-container section-reveal">
+        <div class="register-box">
+            <div class="badge">Start Automating</div>
+            <h2>Create your account</h2>
+            <p>Connect your classroom and streamline your workflow today.</p>
+
+            <div id="alert-box" class="alert hidden"></div>
+
+            <form id="register-form" class="auth-form">
+                <div class="input-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required placeholder="student@school.edu">
+                </div>
+                
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required placeholder="Create a strong password">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full" id="submit-btn">
+                    Sign Up
+                </button>
+            </form>
+
+            <div class="divider">
+                <span>OR</span>
+            </div>
+
+            <button id="google-auth-btn" class="btn btn-yellow btn-full">
+                Connect with Google Classroom
+            </button>
+            
+            <p class="login-prompt">Already have an account? <a href="m-dashboard.html">Go to Dashboard</a></p>
+        </div>
+    </main>
+
+    <script src="register.js"></script>
+</body>
+</html>
