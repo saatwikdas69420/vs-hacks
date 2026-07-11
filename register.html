@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register | StudySync</title>
+    <title>Account | StudySync</title>
     <link rel="stylesheet" href="register.css">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -22,13 +22,22 @@
 
     <main class="register-container section-reveal">
         <div class="register-box">
-            <div class="badge">Start Automating</div>
-            <h2>Create your account</h2>
-            <p>Connect your classroom and streamline your workflow today.</p>
+            
+            <div class="auth-toggle" id="auth-toggle-container">
+                <div class="toggle-slider" id="toggle-slider"></div>
+                <button type="button" class="toggle-btn" id="btn-signup">Sign Up</button>
+                <button type="button" class="toggle-btn" id="btn-login">Log In</button>
+            </div>
+
+            <div class="text-group">
+                <div class="badge text-transition" id="auth-badge">Start Automating</div>
+                <h2 class="text-transition" id="auth-title">Create your account</h2>
+                <p class="text-transition" id="auth-subtitle">Connect your classroom and streamline your workflow today.</p>
+            </div>
 
             <div id="alert-box" class="alert hidden"></div>
 
-            <form id="register-form" class="auth-form">
+            <form id="auth-form" class="auth-form">
                 <div class="input-group">
                     <label for="email">Email Address</label>
                     <input type="email" id="email" name="email" required placeholder="student@school.edu">
@@ -36,10 +45,10 @@
                 
                 <div class="input-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required placeholder="Create a strong password">
+                    <input type="password" id="password" name="password" required placeholder="Password">
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-full" id="submit-btn">
+                <button type="submit" class="btn btn-primary btn-full text-transition" id="submit-btn">
                     Sign Up
                 </button>
             </form>
@@ -49,10 +58,9 @@
             </div>
 
             <button id="google-auth-btn" class="btn btn-yellow btn-full">
-                Connect with Google Classroom
+                Continue with Google Classroom
             </button>
             
-            <p class="login-prompt">Already have an account? <a href="m-dashboard.html">Go to Dashboard</a></p>
         </div>
     </main>
 
