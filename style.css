@@ -1,0 +1,280 @@
+/* --- Variables & Reset --- */
+:root {
+    --bg-color: #ffffff;
+    --primary-blue: #267dff;
+    --accent-yellow: #ffc900;
+    --border-color: #000000;
+    --text-color: #000000;
+    --border-width: 3px;
+    --shadow-offset: 6px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Space Grotesk', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* --- Typography --- */
+h1, h2, h3 {
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+/* --- Navbar --- */
+.navbar {
+    border-bottom: var(--border-width) solid var(--border-color);
+    background-color: var(--primary-blue);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-logo {
+    height: 40px;
+    display: block;
+}
+
+.nav-links {
+    display: flex;
+    gap: 1rem;
+}
+
+/* --- Buttons (Neo-Brutalism Style) --- */
+.btn, .nav-btn {
+    text-decoration: none;
+    font-weight: 600;
+    color: var(--text-color);
+    border: var(--border-width) solid var(--border-color);
+    box-shadow: 4px 4px 0 var(--border-color);
+    transition: all 0.15s ease-in-out;
+    cursor: pointer;
+    display: inline-block;
+}
+
+.nav-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.btn-large {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+}
+
+.btn-primary {
+    background-color: var(--primary-blue);
+}
+
+.btn-secondary {
+    background-color: var(--bg-color);
+}
+
+/* Button Hover Animation */
+.btn:hover, .nav-btn:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 var(--border-color);
+}
+
+.btn:active, .nav-btn:active {
+    transform: translate(4px, 4px);
+    box-shadow: 0px 0px 0 var(--border-color);
+}
+
+/* --- Hero Section --- */
+.hero {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 6rem 2rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+}
+
+.badge {
+    display: inline-block;
+    background-color: var(--accent-yellow);
+    border: var(--border-width) solid var(--border-color);
+    padding: 0.25rem 0.75rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 3px 3px 0 var(--border-color);
+}
+
+.hero-title {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    margin-bottom: 2.5rem;
+    max-width: 500px;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Hero Visuals */
+.hero-visual {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    position: relative;
+}
+
+.brutal-box {
+    border: var(--border-width) solid var(--border-color);
+    padding: 2rem;
+    box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--border-color);
+    animation: float 6s ease-in-out infinite;
+}
+
+.box-blue {
+    background-color: var(--primary-blue);
+    transform: rotate(-2deg);
+    z-index: 2;
+}
+
+.box-yellow {
+    background-color: var(--accent-yellow);
+    transform: rotate(3deg);
+    margin-left: 2rem;
+    margin-top: -1rem;
+    animation-delay: -3s; /* Offset the floating animation */
+}
+
+@keyframes float {
+    0% { transform: translateY(0px) rotate(-2deg); }
+    50% { transform: translateY(-10px) rotate(-1deg); }
+    100% { transform: translateY(0px) rotate(-2deg); }
+}
+
+/* --- Features Section --- */
+.features {
+    border-top: var(--border-width) solid var(--border-color);
+    background-color: #f8f8f8;
+    padding: 5rem 2rem;
+}
+
+.section-title {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 4rem;
+}
+
+.feature-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.feature-card {
+    background-color: var(--bg-color);
+    border: var(--border-width) solid var(--border-color);
+    padding: 2rem;
+    box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--border-color);
+    transition: transform 0.2s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+}
+
+.card-icon {
+    width: 50px;
+    height: 50px;
+    border: var(--border-width) solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 3px 3px 0 var(--border-color);
+}
+
+.blue-bg { background-color: var(--primary-blue); }
+.yellow-bg { background-color: var(--accent-yellow); }
+.white-bg { background-color: var(--bg-color); }
+
+.feature-card h3 {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+/* --- Footer --- */
+.footer {
+    border-top: var(--border-width) solid var(--border-color);
+    background-color: var(--primary-blue);
+    padding: 3rem 2rem;
+    text-align: center;
+}
+
+.footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    font-weight: 600;
+}
+
+.footer-logo {
+    height: 50px;
+}
+
+/* --- Utilities for JS Animations --- */
+.section-reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.section-reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 900px) {
+    .hero {
+        grid-template-columns: 1fr;
+        padding: 3rem 2rem;
+    }
+    .hero-title {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .hero-actions {
+        flex-direction: column;
+    }
+    .nav-links {
+        display: none; /* In a full build, you'd add a hamburger menu here */
+    }
+}
