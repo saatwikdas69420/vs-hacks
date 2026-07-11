@@ -1,0 +1,71 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule | StudySync</title>
+    <link rel="stylesheet" href="m-dashboard.css"> <link rel="stylesheet" href="s-dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="https://raw.githubusercontent.com/saatwikdas69420/vs-hacks/main/full-logo.png" alt="StudySync Logo" class="sidebar-logo">
+            </div>
+            <nav class="sidebar-nav">
+                <a href="m-dashboard.html" class="nav-item">Main Dashboard</a>
+                <a href="s-dashboard.html" class="nav-item active">Schedule</a>
+                <a href="p-dashboard.html" class="nav-item">Projects Workspace</a>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="logout-btn" class="btn btn-secondary btn-full">Logout</button>
+            </div>
+        </aside>
+
+        <main class="dashboard-content section-reveal">
+            <header class="dashboard-header flex-header">
+                <div>
+                    <div class="badge">AI Powered</div>
+                    <h1>Weekly Schedule</h1>
+                    <p>Your deadlines and AI-optimized study blocks for the week.</p>
+                </div>
+                <button id="generate-schedule-btn" class="btn btn-primary">
+                    Generate AI Schedule
+                </button>
+            </header>
+
+            <div id="ai-loading" class="hidden brutal-alert">
+                <div class="spinner"></div>
+                <span>DeepSeek AI is analyzing your deadlines and building your schedule...</span>
+            </div>
+
+            <div class="calendar-grid">
+                <div class="day-column">
+                    <h3 class="day-title">Monday</h3>
+                    <div class="day-events" id="col-monday"></div>
+                </div>
+                <div class="day-column">
+                    <h3 class="day-title">Tuesday</h3>
+                    <div class="day-events" id="col-tuesday"></div>
+                </div>
+                <div class="day-column">
+                    <h3 class="day-title">Wednesday</h3>
+                    <div class="day-events" id="col-wednesday"></div>
+                </div>
+                <div class="day-column">
+                    <h3 class="day-title">Thursday</h3>
+                    <div class="day-events" id="col-thursday"></div>
+                </div>
+                <div class="day-column">
+                    <h3 class="day-title">Friday</h3>
+                    <div class="day-events" id="col-friday"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="s-dashboard.js"></script>
+</body>
+</html>
