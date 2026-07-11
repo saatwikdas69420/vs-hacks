@@ -1,0 +1,103 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects | StudySync</title>
+    <link rel="stylesheet" href="m-dashboard.css">
+    <link rel="stylesheet" href="p-dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="https://raw.githubusercontent.com/saatwikdas69420/vs-hacks/main/full-logo.png" alt="StudySync Logo" class="sidebar-logo">
+            </div>
+            <nav class="sidebar-nav">
+                <a href="m-dashboard.html" class="nav-item">Main Dashboard</a>
+                <a href="s-dashboard.html" class="nav-item">Schedule</a>
+                <a href="p-dashboard.html" class="nav-item active">Projects Workspace</a>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="logout-btn" class="btn btn-secondary btn-full">Logout</button>
+            </div>
+        </aside>
+
+        <main class="dashboard-content workspace-layout section-reveal">
+            
+            <div class="workspace-main">
+                
+                <div class="project-selector-bar brutal-box">
+                    <div class="selector-left">
+                        <label for="project-select"><strong>Active Project:</strong></label>
+                        <select id="project-select" class="brutal-select">
+                            <option value="" disabled selected>Select a project...</option>
+                        </select>
+                    </div>
+                    <button id="create-project-btn" class="btn btn-yellow">+ New Project</button>
+                </div>
+
+                <header class="workspace-header">
+                    <div>
+                        <div class="badge">Live Workspace</div>
+                        <h1 id="project-title">No Project Selected</h1>
+                        <p id="collaborators-list">Select or create a project to collaborate in real-time.</p>
+                    </div>
+                    <div class="toolbar">
+                        <button class="btn btn-secondary" id="upload-file-btn">Upload File</button>
+                        <button class="btn btn-primary" id="new-flashcards-btn">AI Flashcards</button>
+                        <button class="btn btn-yellow" id="quiz-btn">AI Quiz</button>
+                    </div>
+                </header>
+
+                <div class="editor-container brutal-box">
+                    <div class="editor-tabs">
+                        <button class="tab active">Draft.txt</button>
+                        <button class="tab">Flashcards</button>
+                        <button class="tab">Files</button>
+                    </div>
+                    
+                    <textarea id="live-editor" class="realtime-textarea" placeholder="Select or create a project to start typing..."></textarea>
+                    
+                    <div id="flashcard-view" class="hidden interactive-view">
+                        <div class="flashcard" id="active-flashcard">
+                            <div class="front" id="flashcard-front">No flashcards loaded</div>
+                            <div class="back hidden" id="flashcard-back">Ask AI to generate flashcards</div>
+                        </div>
+                        <button class="btn btn-secondary" id="flip-btn">Flip Card</button>
+                    </div>
+
+                    <div id="files-view" class="hidden interactive-view">
+                        <ul id="file-list" class="file-list-container">
+                            <li class="empty-state">No files uploaded yet.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="chat-sidebar brutal-box widget-blue">
+                <div class="chat-header">
+                    <h2>Team Chat & AI</h2>
+                    <span class="live-indicator"></span>
+                </div>
+                
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message system">Select or create a project to join live chat and use /ai commands.</div>
+                </div>
+
+                <form id="chat-form" class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="Type a message or /ai..." autocomplete="off">
+                    <button type="submit" class="btn btn-yellow">Send</button>
+                </form>
+            </aside>
+
+        </main>
+    </div>
+
+    <input type="file" id="hidden-file-input" class="hidden">
+
+    <script src="p-dashboard.js"></script>
+</body>
+</html>
