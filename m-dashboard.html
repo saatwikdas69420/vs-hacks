@@ -1,0 +1,70 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | StudySync</title>
+    <link rel="stylesheet" href="m-dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="https://raw.githubusercontent.com/saatwikdas69420/vs-hacks/main/full-logo.png" alt="StudySync Logo" class="sidebar-logo">
+            </div>
+            <nav class="sidebar-nav">
+                <a href="m-dashboard.html" class="nav-item active">Main Dashboard</a>
+                <a href="s-dashboard.html" class="nav-item">Schedule</a>
+                <a href="p-dashboard.html" class="nav-item">Projects Workspace</a>
+            </nav>
+            <div class="sidebar-footer">
+                <button id="logout-btn" class="btn btn-secondary btn-full">Logout</button>
+            </div>
+        </aside>
+
+        <main class="dashboard-content section-reveal">
+            <header class="dashboard-header">
+                <div class="badge">Live Workspace</div>
+                <h1 id="user-greeting">Welcome back.</h1>
+                <p>Here is what is happening across your synced classes today.</p>
+            </header>
+
+            <div class="dashboard-grid">
+                
+                <div class="brutal-widget widget-yellow">
+                    <div class="widget-header">
+                        <h2>Upcoming Assignments</h2>
+                        <span class="count" id="assignment-count">0</span>
+                    </div>
+                    <ul class="task-list" id="assignments-list">
+                        </ul>
+                    <a href="s-dashboard.html" class="widget-link">View full schedule →</a>
+                </div>
+
+                <div class="brutal-widget widget-blue">
+                    <div class="widget-header">
+                        <h2>Today's Events</h2>
+                    </div>
+                    <div id="events-list">
+                        </div>
+                </div>
+
+                <div class="brutal-widget widget-white">
+                    <div class="widget-header">
+                        <h2>Live Peer Activity</h2>
+                        <div class="live-indicator"></div>
+                    </div>
+                    <ul class="activity-feed" id="activity-feed">
+                        </ul>
+                    <a href="p-dashboard.html" class="widget-link">Join a project workspace →</a>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="m-dashboard.js"></script>
+</body>
+</html>
