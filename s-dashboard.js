@@ -196,3 +196,49 @@ Output ONLY a raw JSON array of objects with the exact keys: "day" (e.g. "Monday
         }
     });
 });
+
+// Function to sync assignments directly from Google Classroom API
+async function syncGoogleClassroomAssignments(session) {
+    const providerToken = session.provider_token; // Google OAuth Access Token
+    if (!providerToken) return;
+
+    try {
+        // 1. Fetch user's Google Classroom courses
+        const coursesRes = await fetch('https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE', {
+            headers: { Authorization: `Bearer ${providerToken}` }
+        });
+        const coursesData = await coursesRes.json();
+        if (!coursesData.courses) return;
+
+        // 2. Fetch coursework (assignments) for each course
+        for (const course of coursesData.courses) {
+            const workRes = await fetch(`https://classroom.googleapis.com/v1/courses/${course.id}/courseWork`, {
+                headers: { Authorization: `Bearer ${providerToken}` }
+            });
+            const workData = await workRes.json();
+
+            if (workData.courseWork) {
+                for (const work of workData.courseWork) {
+                    // Map Google due date to weekday string (e.g. "monday")
+                    let dueDay = 'monday';
+                    if (work.dueDate) {
+                        const dateObj = new Date(work.dueDate.year, work.dueDate.month - 1, work.dueDate.day);
+                        dueDay = dateObj.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+                    }
+
+                    // Upsert assignment into Supabase DB
+                    await supabaseClient.from('assignments').upsert([{
+                        user_id: session.user.id,
+                        title: `${course.name}: ${work.title}`,
+                        due_day: dueDay,
+                        due_time: work.dueTime ? `${work.dueTime.hours}:${work.dueTime.minutes || '00'}` : '11:59 PM (Due)',
+                        type: 'deadline'
+                    }], { onConflict: 'title' });
+                }
+            }
+        }
+        console.log("Google Classroom sync complete!");
+    } catch (err) {
+        console.error("Failed to sync Google Classroom:", err);
+    }
+}
