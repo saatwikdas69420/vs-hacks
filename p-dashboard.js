@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 "Authorization": `Bearer ${FEATHERLESS_API_KEY}`
             },
             body: JSON.stringify({
-                model: "deepseek-coder-v2-instruct",
+                model: "deepseek-ai/DeepSeek-V4-Flash",
                 messages: [
                     { role: "system", content: systemMsg },
                     { role: "user", content: prompt }
