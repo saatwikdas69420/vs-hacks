@@ -63,6 +63,42 @@ document.addEventListener("DOMContentLoaded", async () => {
         const data = await response.json();
         return data.choices[0].message.content;
     }
+    
+    // Bulletproof JSON cleaner for LLM outputs
+    function safeJSONParse(rawText) {
+            if (!rawText) throw new Error("Empty AI response received.");
+        
+            let cleanText = rawText.trim();
+        
+            // 1. Strip Markdown code fences if present
+            cleanText = cleanText.replace(/```json/gi, '').replace(/```/gi, '').trim();
+        
+            // 2. Extract strictly from the first '{' or '[' to the last '}' or ']'
+            const startObj = cleanText.indexOf('{');
+            const startArr = cleanText.indexOf('[');
+            
+            let start = -1;
+            if (startObj !== -1 && startArr !== -1) {
+                start = Math.min(startObj, startArr);
+            } else {
+                start = startObj !== -1 ? startObj : startArr;
+            }
+        
+            const endObj = cleanText.lastIndexOf('}');
+            const endArr = cleanText.lastIndexOf(']');
+            const end = Math.max(endObj, endArr);
+        
+            if (start === -1 || end === -1 || end <= start) {
+                throw new Error("No JSON structure found in AI output.");
+            }
+        
+            cleanText = cleanText.substring(start, end + 1);
+        
+            // 3. Fix common LLM invalid JSON formatting (trailing commas)
+            cleanText = cleanText.replace(/,\s*([\}\]])/g, '$1');
+        
+            return JSON.parse(cleanText);
+````}
 
     // --- 2. Load & Create Projects ---
     const loadUserProjects = async () => {
@@ -219,39 +255,44 @@ document.addEventListener("DOMContentLoaded", async () => {
 
  // --- 6. AI Flashcards & AI Quiz Buttons ---
     document.getElementById('new-flashcards-btn').addEventListener('click', async () => {
-        const topic = prompt("Enter a topic or text to generate Flashcards for:");
-        if (!topic) return;
+    const topic = prompt("Enter a topic or text to generate Flashcards for:");
+    if (!topic) return;
 
-        alert("AI is generating flashcards...");
-        try {
-            // Stricter prompt for the AI
-            const raw = await callDeepSeekAI(`Generate exactly 1 flashcard for topic: ${topic}. Output ONLY a single JSON object with keys "front" and "back". Do not include any markdown, backticks, or conversational text.`);
-            
-            // Bulletproof JSON extraction: Find the first '{' and last '}'
-            const firstBrace = raw.indexOf('{');
-            const lastBrace = raw.lastIndexOf('}');
-            
-            if (firstBrace === -1 || lastBrace === -1) {
-                throw new Error("AI did not return a valid JSON object.");
-            }
-            
-            // Slice out only the JSON part
-            const cleanJSON = raw.substring(firstBrace, lastBrace + 1);
-            const card = JSON.parse(cleanJSON);
+    alert("AI is generating flashcards...");
+    
+    // Explicit system prompt with an exact example format
+    const systemPrompt = `You are a strict API endpoint that returns JSON only. 
+Your task is to generate 1 study flashcard for the user's topic.
+CRITICAL RULE: Respond ONLY with a raw JSON object. Do NOT add markdown, backticks, or any explanation.
 
-            flashcardFront.textContent = card.front;
-            flashcardBack.textContent = card.back;
-            flashcardBack.classList.add('hidden');
+EXAMPLE OUTPUT:
+{"front": "What is Photosynthesis?", "back": "The process by which green plants use sunlight to synthesize nutrients."}`;
 
-            // Switch to flashcard tab
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab')[1].classList.add('active');
-            editor.classList.add('hidden');
-            filesView.classList.add('hidden');
-            flashcardView.classList.remove('hidden');
+    try {
+        const rawResponse = await callDeepSeekAI(topic, systemPrompt);
+        
+        // Use our bulletproof parser
+        const card = safeJSONParse(rawResponse);
+
+        if (!card.front || !card.back) {
+            throw new Error("JSON missing required 'front' or 'back' keys.");
+        }
+
+        // Render to UI
+        flashcardFront.textContent = card.front;
+        flashcardBack.textContent = card.back;
+        flashcardBack.classList.add('hidden');
+
+        // Switch to flashcard tab
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab')[1].classList.add('active');
+        editor.classList.add('hidden');
+        filesView.classList.add('hidden');
+        flashcardView.classList.remove('hidden');
+
         } catch (err) {
-            alert("Failed to generate flashcards: " + err.message);
-            console.error("Raw AI Output failed to parse:", err);
+            console.error("AI Output Raw Error Log:", err);
+            alert("Failed to generate flashcard. Please try again.");
         }
     });
 
