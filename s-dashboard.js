@@ -153,7 +153,7 @@ Output ONLY a raw JSON array of objects with the exact keys: "day" (e.g. "Monday
                     "Authorization": `Bearer ${FEATHERLESS_API_KEY}`
                 },
                 body: JSON.stringify({
-                    model: "deepseek-coder-v2-instruct",
+                    model: "deepseek-ai/DeepSeek-V4-Flash",
                     messages: [
                         { role: "system", content: systemPrompt }
                     ],
