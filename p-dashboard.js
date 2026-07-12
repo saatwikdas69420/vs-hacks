@@ -217,16 +217,27 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    // --- 6. AI Flashcards & AI Quiz Buttons ---
+ // --- 6. AI Flashcards & AI Quiz Buttons ---
     document.getElementById('new-flashcards-btn').addEventListener('click', async () => {
         const topic = prompt("Enter a topic or text to generate Flashcards for:");
         if (!topic) return;
 
-        alert("DeepSeek AI is generating flashcards...");
+        alert("AI is generating flashcards...");
         try {
-            const raw = await callDeepSeekAI(`Generate 1 flashcard for topic: ${topic}. Format output strictly as JSON: {"front": "question", "back": "answer"}`);
-            const clean = raw.replace(/```json/g, '').replace(/```/g, '').trim();
-            const card = JSON.parse(clean);
+            // Stricter prompt for the AI
+            const raw = await callDeepSeekAI(`Generate exactly 1 flashcard for topic: ${topic}. Output ONLY a single JSON object with keys "front" and "back". Do not include any markdown, backticks, or conversational text.`);
+            
+            // Bulletproof JSON extraction: Find the first '{' and last '}'
+            const firstBrace = raw.indexOf('{');
+            const lastBrace = raw.lastIndexOf('}');
+            
+            if (firstBrace === -1 || lastBrace === -1) {
+                throw new Error("AI did not return a valid JSON object.");
+            }
+            
+            // Slice out only the JSON part
+            const cleanJSON = raw.substring(firstBrace, lastBrace + 1);
+            const card = JSON.parse(cleanJSON);
 
             flashcardFront.textContent = card.front;
             flashcardBack.textContent = card.back;
@@ -240,6 +251,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             flashcardView.classList.remove('hidden');
         } catch (err) {
             alert("Failed to generate flashcards: " + err.message);
+            console.error("Raw AI Output failed to parse:", err);
         }
     });
 
@@ -248,9 +260,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (!topic) return;
 
         try {
-            const quiz = await callDeepSeekAI(`Create a short 3-question quiz on ${topic} with answers at the end.`);
-            appendMessage('DeepSeek AI Quiz', quiz, 'ai');
+            appendMessage('System', 'AI is generating your quiz...', 'system');
+            
+            // Explicitly forbid Markdown so it looks clean in our plain-text chat UI
+            const quiz = await callDeepSeekAI(`Create a short 3-question quiz on ${topic} with answers at the end. Use PLAIN TEXT ONLY. Do not use asterisks, bolding, hashes, bullet points, or any markdown formatting whatsoever. Just standard text spacing.`);
+            
+            // Remove the loading message
+            if (chatMessages.lastChild) chatMessages.lastChild.remove();
+            
+            appendMessage('AI Quiz', quiz, 'ai');
         } catch (err) {
+            if (chatMessages.lastChild) chatMessages.lastChild.remove();
             alert("Failed to generate quiz: " + err.message);
         }
     });
