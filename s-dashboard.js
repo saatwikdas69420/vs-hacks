@@ -50,12 +50,15 @@ document.addEventListener("DOMContentLoaded", async () => {
             await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    scopes: 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me.readonly',
+                    scopes: 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me.readonly https://www.googleapis.com/auth/classroom.student-submissions.me.readonly',
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent'
+                    },
                     redirectTo: `${window.location.origin}/s-dashboard.html`
                 }
             });
-        });
-    }
+    });
 
     // Helpers to render the calendar grid
     const renderEvent = (day, time, title, type) => {
