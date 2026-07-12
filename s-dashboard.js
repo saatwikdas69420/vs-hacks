@@ -16,8 +16,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const user = session.user;
     const userId = user.id;
 
+    // Logout Handler
     document.getElementById('logout-btn').addEventListener('click', async () => {
         await supabaseClient.auth.signOut();
+        localStorage.removeItem('google_provider_token');
         window.location.href = 'index.html';
     });
 
@@ -58,15 +60,30 @@ document.addEventListener("DOMContentLoaded", async () => {
                     redirectTo: `${window.location.origin}/s-dashboard.html`
                 }
             });
-    });
+        });
+    }
 
-    // Helpers to render the calendar grid
+    // --- 3. Calendar Grid Rendering Helpers ---
     const renderEvent = (day, time, title, type) => {
-        const column = document.getElementById(`col-${day.toLowerCase()}`);
+        if (!day) return;
+        const cleanDay = day.toLowerCase().trim();
+        const column = document.getElementById(`col-${cleanDay}`);
+        
         if (column) {
             const block = document.createElement('div');
             block.className = `event-block type-${type}`;
-            block.innerHTML = `<div class="event-time">${time}</div><div class="event-title">${title}</div>`;
+            block.style.cssText = `
+                background-color: ${type === 'deadline' ? '#ff7676' : '#a3e635'};
+                border: 2px solid #000;
+                padding: 0.5rem;
+                margin-top: 0.5rem;
+                font-weight: bold;
+                border-radius: 4px;
+            `;
+            block.innerHTML = `
+                <div class="event-time" style="font-size: 0.8rem; opacity: 0.8;">${time}</div>
+                <div class="event-title" style="font-size: 0.9rem; margin-top: 0.2rem;">${title}</div>
+            `;
             column.appendChild(block);
         }
     };
@@ -78,38 +95,64 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     };
 
-    // --- 3. Fetch Real Deadlines & Render to Grid ---
+    // --- 4. Fetch Deadlines & Load into Calendar ---
     const fetchUserAssignments = async () => {
-        const { data: assignments } = await supabaseClient.from('assignments').select('*').eq('user_id', userId);
+        const { data: assignments, error } = await supabaseClient
+            .from('assignments')
+            .select('*')
+            .eq('user_id', userId);
+
+        if (error) {
+            console.error("Error fetching assignments:", error);
+            return [];
+        }
         return assignments || [];
     };
 
     const loadCalendar = async () => {
         clearCalendar();
         const userDeadlines = await fetchUserAssignments();
+
+        if (userDeadlines.length === 0) {
+            console.warn("No deadlines found in database for schedule grid.");
+            return;
+        }
+
         userDeadlines.forEach(item => {
-            renderEvent(item.due_day || 'monday', item.due_time || '11:59 PM (Due)', item.title, 'deadline');
+            renderEvent(
+                item.due_day || 'monday', 
+                item.due_time || '11:59 PM', 
+                item.title, 
+                'deadline'
+            );
         });
     };
     
-    // Load it on page start!
+    // Load existing assignments directly into grid on page start
     await loadCalendar();
 
-    // --- 4. Generate Schedule via DeepSeek AI ---
+    // --- 5. Generate AI Schedule via Featherless AI ---
     generateBtn.addEventListener('click', async () => {
         const activeDeadlines = await fetchUserAssignments();
         if (activeDeadlines.length === 0) {
-            alert('No upcoming assignments found! Connect Google Classroom first.');
+            alert('No upcoming assignments found! Connect Google Classroom or sync assignments first.');
             return;
         }
 
         generateBtn.disabled = true;
         aiLoading.classList.remove('hidden');
 
-        const systemPrompt = `You are an AI scheduler. Create a study schedule for a 5-day week (Monday to Friday). 
-        Deadlines: ${JSON.stringify(activeDeadlines)}.
-        Allocate study blocks prior to these deadlines. 
-        Output strictly a JSON array of objects with keys: "day" (e.g. "monday"), "time" (e.g. "4:00 PM"), "title" (e.g. "Study..."), "type" (must be "study"). No markdown.`;
+        const systemPrompt = `You are an AI scheduler. Create a study schedule for a 5-day week (monday, tuesday, wednesday, thursday, friday). 
+Deadlines: ${JSON.stringify(activeDeadlines)}.
+Allocate study blocks prior to these deadlines. 
+Output ONLY plain text key-value blocks in this exact format for each session:
+
+DAY: monday
+TIME: 4:00 PM
+TITLE: Study Physics
+TYPE: study
+
+Do not use JSON, backticks, or markdown formatting. Just repeat the block for each study session.`;
 
         try {
             const response = await fetch("https://api.featherless.ai/v1/chat/completions", {
@@ -119,24 +162,38 @@ document.addEventListener("DOMContentLoaded", async () => {
                     "Authorization": `Bearer ${FEATHERLESS_API_KEY}`
                 },
                 body: JSON.stringify({
-                    model: "Qwen/Qwen2.5-Coder-32B-Instruct", // Replaced with valid Featherless Model ID
+                    model: "Qwen/Qwen2.5-Coder-32B-Instruct",
                     messages: [{ role: "user", content: systemPrompt }],
-                    temperature: 0.2
+                    temperature: 0.1
                 })
             });
 
             const data = await response.json();
-            const content = data.choices[0].message.content.replace(/```json/g, '').replace(/```/g, '').trim();
-            const aiSchedule = JSON.parse(content);
+            const rawText = data.choices[0].message.content;
 
-            await loadCalendar(); // Reload hard deadlines
-            
-            aiSchedule.forEach(block => {
-                renderEvent(block.day, block.time, block.title, block.type);
+            // Clear & reload deadlines
+            await loadCalendar();
+
+            // Regex parsing for plain text output
+            const blocks = rawText.split(/\n\s*\n/);
+            blocks.forEach(block => {
+                const dayMatch = block.match(/DAY:\s*(.*)/i);
+                const timeMatch = block.match(/TIME:\s*(.*)/i);
+                const titleMatch = block.match(/TITLE:\s*(.*)/i);
+
+                if (dayMatch && timeMatch && titleMatch) {
+                    renderEvent(
+                        dayMatch[1].trim(), 
+                        timeMatch[1].trim(), 
+                        titleMatch[1].trim(), 
+                        'study'
+                    );
+                }
             });
 
         } catch (error) {
-            alert("AI Failed: " + error.message);
+            alert("AI Schedule Generation Failed: " + error.message);
+            console.error("AI Schedule Error:", error);
         } finally {
             generateBtn.disabled = false;
             aiLoading.classList.add('hidden');
