@@ -13,11 +13,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         window.location.href = 'register.html';
         return;
     }
-
     const user = session.user;
     const userId = user.id;
 
-    // 2. Logout setup
     document.getElementById('logout-btn').addEventListener('click', async () => {
         await supabaseClient.auth.signOut();
         window.location.href = 'index.html';
@@ -26,15 +24,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     const generateBtn = document.getElementById('generate-schedule-btn');
     const aiLoading = document.getElementById('ai-loading');
 
-    // --- 3. Check Google Classroom Connection ---
+    // --- 2. Check Google Classroom Connection UI ---
     const isGoogleConnected = user.app_metadata.provider === 'google' || 
         (user.identities && user.identities.some(id => id.provider === 'google'));
 
     if (!isGoogleConnected) {
-        // Create and insert a Google Classroom Notice Box above the calendar
         const mainContent = document.querySelector('.dashboard-content');
         const header = document.querySelector('.dashboard-header');
-
         const noticeBox = document.createElement('div');
         noticeBox.className = 'brutal-alert';
         noticeBox.style.justifyContent = 'space-between';
@@ -46,104 +42,71 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <strong>Google Classroom isn't connected.</strong>
                 <p style="margin-bottom: 0; font-size: 0.9rem;">Connect your account to automatically pull in deadlines and test dates.</p>
             </div>
-            <button id="connect-classroom-btn" class="btn btn-secondary" style="background-color: var(--bg-color); white-space: nowrap;">
-                Connect Google Classroom
-            </button>
+            <button id="connect-classroom-btn" class="btn btn-secondary" style="background-color: var(--bg-color);">Connect</button>
         `;
-
         mainContent.insertBefore(noticeBox, header.nextSibling);
 
-        // Handle direct linking when button is clicked
         document.getElementById('connect-classroom-btn').addEventListener('click', async () => {
-            try {
-                const { error } = await supabaseClient.auth.signInWithOAuth({
-                    provider: 'google',
-                    options: {
-                        scopes: 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me.readonly',
-                        redirectTo: `${window.location.origin}/s-dashboard.html`
-                    }
-                });
-                if (error) throw error;
-            } catch (err) {
-                alert('Could not connect to Google: ' + err.message);
-            }
+            await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    scopes: 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me.readonly',
+                    redirectTo: `${window.location.origin}/s-dashboard.html`
+                }
+            });
         });
     }
 
-    // Helper to render event blocks onto the calendar grid
+    // Helpers to render the calendar grid
     const renderEvent = (day, time, title, type) => {
-        const colId = `col-${day.toLowerCase()}`;
-        const column = document.getElementById(colId);
-        
+        const column = document.getElementById(`col-${day.toLowerCase()}`);
         if (column) {
             const block = document.createElement('div');
             block.className = `event-block type-${type}`;
-            block.innerHTML = `
-                <div class="event-time">${time}</div>
-                <div class="event-title">${title}</div>
-            `;
+            block.innerHTML = `<div class="event-time">${time}</div><div class="event-title">${title}</div>`;
             column.appendChild(block);
         }
     };
 
-    // Helper to clear dynamically rendered events (preserving layout)
     const clearCalendar = () => {
-        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
-        days.forEach(day => {
+        ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].forEach(day => {
             const col = document.getElementById(`col-${day}`);
             if (col) col.innerHTML = '';
         });
     };
 
-    // 4. Fetch Real Deadlines & Assignments from Supabase
+    // --- 3. Fetch Real Deadlines & Render to Grid ---
     const fetchUserAssignments = async () => {
-        try {
-            const { data: assignments, error } = await supabaseClient
-                .from('assignments')
-                .select('*')
-                .eq('user_id', userId);
-
-            if (error) throw error;
-            return assignments || [];
-        } catch (err) {
-            console.error('Error fetching assignments:', err.message);
-            return [];
-        }
+        const { data: assignments } = await supabaseClient.from('assignments').select('*').eq('user_id', userId);
+        return assignments || [];
     };
 
-    // Populate actual user deadlines directly onto the grid
-    const userDeadlines = await fetchUserAssignments();
-
-    if (userDeadlines.length > 0) {
+    const loadCalendar = async () => {
+        clearCalendar();
+        const userDeadlines = await fetchUserAssignments();
         userDeadlines.forEach(item => {
-            const day = item.due_day || 'monday';
-            const time = item.due_time || '11:59 PM (Due)';
-            renderEvent(day, time, item.title, 'deadline');
+            renderEvent(item.due_day || 'monday', item.due_time || '11:59 PM (Due)', item.title, 'deadline');
         });
-    }
+    };
+    
+    // Load it on page start!
+    await loadCalendar();
 
-    // 5. Generate Schedule via Featherless / DeepSeek AI
+    // --- 4. Generate Schedule via DeepSeek AI ---
     generateBtn.addEventListener('click', async () => {
         const activeDeadlines = await fetchUserAssignments();
-
         if (activeDeadlines.length === 0) {
-            alert('No upcoming assignments or tests found in your database. Connect Google Classroom or sync some deadlines first!');
+            alert('No upcoming assignments found! Connect Google Classroom first.');
             return;
         }
 
         generateBtn.disabled = true;
         aiLoading.classList.remove('hidden');
 
-        const deadlineSummary = activeDeadlines.map(d => ({
-            task: d.title,
-            due_day: d.due_day,
-            type: d.type || "deadline"
-        }));
-
-        const systemPrompt = `You are a student scheduling AI. Create an optimized study schedule for a 5-day week (Monday to Friday). 
-The student has these real upcoming deadlines and exams: ${JSON.stringify(deadlineSummary)}.
-Allocate 1-2 hour focused study blocks prior to these deadlines. 
-Output ONLY a raw JSON array of objects with the exact keys: "day" (e.g. "Monday"), "time" (e.g. "4:00 PM"), "title" (e.g. "Study for AP Physics"), "type" (must be exactly "study"). Do not include any markdown formatting or commentary.`;
+        const systemPrompt = `You are an AI scheduler. Create a study schedule for a 5-day week (Monday to Friday). 
+        Deadlines: ${JSON.stringify(activeDeadlines)}.
+        Allocate study blocks prior to these deadlines. 
+        Output strictly a JSON array of objects with keys: "day" (e.g. "monday"), "time" (e.g. "4:00 PM"), "title" (e.g. "Study..."), "type" (must be "study"). No markdown.`;
 
         try {
             const response = await fetch("https://api.featherless.ai/v1/chat/completions", {
@@ -153,92 +116,27 @@ Output ONLY a raw JSON array of objects with the exact keys: "day" (e.g. "Monday
                     "Authorization": `Bearer ${FEATHERLESS_API_KEY}`
                 },
                 body: JSON.stringify({
-                    model: "deepseek-ai/DeepSeek-V4-Flash",
-                    messages: [
-                        { role: "system", content: systemPrompt }
-                    ],
+                    model: "Qwen/Qwen2.5-Coder-32B-Instruct", // Replaced with valid Featherless Model ID
+                    messages: [{ role: "user", content: systemPrompt }],
                     temperature: 0.2
                 })
             });
 
-            if (!response.ok) {
-                throw new Error(`AI API error: ${response.statusText}`);
-            }
-
             const data = await response.json();
+            const content = data.choices[0].message.content.replace(/```json/g, '').replace(/```/g, '').trim();
+            const aiSchedule = JSON.parse(content);
+
+            await loadCalendar(); // Reload hard deadlines
             
-            let aiSchedule;
-            try {
-                const content = data.choices[0].message.content.trim();
-                const cleanedContent = content.replace(/```json/g, '').replace(/```/g, '');
-                aiSchedule = JSON.parse(cleanedContent);
-            } catch (e) {
-                throw new Error("AI returned unparseable schedule output. Please try again.");
-            }
-
-            // Clear previous study blocks and re-render deadlines + AI schedule
-            clearCalendar();
-            activeDeadlines.forEach(item => {
-                renderEvent(item.due_day || 'monday', item.due_time || '11:59 PM (Due)', item.title, 'deadline');
-            });
-
-            // Render new AI study blocks
             aiSchedule.forEach(block => {
                 renderEvent(block.day, block.time, block.title, block.type);
             });
 
         } catch (error) {
-            console.error("AI Generation Error:", error);
-            alert("Failed to generate schedule: " + error.message);
+            alert("AI Failed: " + error.message);
         } finally {
             generateBtn.disabled = false;
             aiLoading.classList.add('hidden');
         }
     });
 });
-
-// Function to sync assignments directly from Google Classroom API
-async function syncGoogleClassroomAssignments(session) {
-    const providerToken = session.provider_token; // Google OAuth Access Token
-    if (!providerToken) return;
-
-    try {
-        // 1. Fetch user's Google Classroom courses
-        const coursesRes = await fetch('https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE', {
-            headers: { Authorization: `Bearer ${providerToken}` }
-        });
-        const coursesData = await coursesRes.json();
-        if (!coursesData.courses) return;
-
-        // 2. Fetch coursework (assignments) for each course
-        for (const course of coursesData.courses) {
-            const workRes = await fetch(`https://classroom.googleapis.com/v1/courses/${course.id}/courseWork`, {
-                headers: { Authorization: `Bearer ${providerToken}` }
-            });
-            const workData = await workRes.json();
-
-            if (workData.courseWork) {
-                for (const work of workData.courseWork) {
-                    // Map Google due date to weekday string (e.g. "monday")
-                    let dueDay = 'monday';
-                    if (work.dueDate) {
-                        const dateObj = new Date(work.dueDate.year, work.dueDate.month - 1, work.dueDate.day);
-                        dueDay = dateObj.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-                    }
-
-                    // Upsert assignment into Supabase DB
-                    await supabaseClient.from('assignments').upsert([{
-                        user_id: session.user.id,
-                        title: `${course.name}: ${work.title}`,
-                        due_day: dueDay,
-                        due_time: work.dueTime ? `${work.dueTime.hours}:${work.dueTime.minutes || '00'}` : '11:59 PM (Due)',
-                        type: 'deadline'
-                    }], { onConflict: 'title' });
-                }
-            }
-        }
-        console.log("Google Classroom sync complete!");
-    } catch (err) {
-        console.error("Failed to sync Google Classroom:", err);
-    }
-}
