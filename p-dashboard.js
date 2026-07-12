@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     { role: "system", content: systemMsg },
                     { role: "user", content: prompt }
                 ],
-                temperature: 0.3
+                temperature: 0.1
             })
         });
         if (!response.ok) throw new Error(`AI HTTP Error: ${response.status}`);
@@ -255,64 +255,47 @@ document.addEventListener("DOMContentLoaded", async () => {
 
  // --- 6. AI Flashcards & AI Quiz Buttons ---
     document.getElementById('new-flashcards-btn').addEventListener('click', async () => {
-    const topic = prompt("Enter a topic or text to generate Flashcards for:");
-    if (!topic) return;
-
-    alert("AI is generating flashcards...");
-    
-    // Explicit system prompt with an exact example format
-    const systemPrompt = `You are a strict API endpoint that returns JSON only. 
-Your task is to generate 1 study flashcard for the user's topic.
-CRITICAL RULE: Respond ONLY with a raw JSON object. Do NOT add markdown, backticks, or any explanation.
-
-EXAMPLE OUTPUT:
-{"front": "What is Photosynthesis?", "back": "The process by which green plants use sunlight to synthesize nutrients."}`;
-
-    try {
-        const rawResponse = await callDeepSeekAI(topic, systemPrompt);
-        
-        // Use our bulletproof parser
-        const card = safeJSONParse(rawResponse);
-
-        if (!card.front || !card.back) {
-            throw new Error("JSON missing required 'front' or 'back' keys.");
-        }
-
-        // Render to UI
-        flashcardFront.textContent = card.front;
-        flashcardBack.textContent = card.back;
-        flashcardBack.classList.add('hidden');
-
-        // Switch to flashcard tab
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.tab')[1].classList.add('active');
-        editor.classList.add('hidden');
-        filesView.classList.add('hidden');
-        flashcardView.classList.remove('hidden');
-
-        } catch (err) {
-            console.error("AI Output Raw Error Log:", err);
-            alert("Failed to generate flashcard. Please try again.");
-        }
-    });
-
-    document.getElementById('quiz-btn').addEventListener('click', async () => {
-        const topic = prompt("Enter a topic for an AI Quiz:");
+        const topic = prompt("Enter a topic or text to generate Flashcards for:");
         if (!topic) return;
-
+    
+        alert("AI is generating flashcard...");
+    
         try {
-            appendMessage('System', 'AI is generating your quiz...', 'system');
-            
-            // Explicitly forbid Markdown so it looks clean in our plain-text chat UI
-            const quiz = await callDeepSeekAI(`Create a short 3-question quiz on ${topic} with answers at the end. Use PLAIN TEXT ONLY. Do not use asterisks, bolding, hashes, bullet points, or any markdown formatting whatsoever. Just standard text spacing.`);
-            
-            // Remove the loading message
-            if (chatMessages.lastChild) chatMessages.lastChild.remove();
-            
-            appendMessage('AI Quiz', quiz, 'ai');
+            const promptText = `Generate 1 study flashcard for the topic: "${topic}".
+    Output ONLY in this exact format:
+    FRONT: [Question or term here]
+    BACK: [Answer or definition here]
+    
+    Do not use markdown, backticks, bolding, or JSON. Just the two lines starting with FRONT: and BACK:.`;
+    
+            const rawResponse = await callDeepSeekAI(promptText);
+    
+            // Extract using regular expressions (Works every single time!)
+            const frontMatch = rawResponse.match(/FRONT:\s*(.*)/i);
+            const backMatch = rawResponse.match(/BACK:\s*(.*)/i);
+    
+            if (!frontMatch || !backMatch) {
+                throw new Error("AI output was missing FRONT: or BACK: labels.");
+            }
+    
+            const frontText = frontMatch[1].trim();
+            const backText = backMatch[1].trim();
+    
+            // Render to UI
+            flashcardFront.textContent = frontText;
+            flashcardBack.textContent = backText;
+            flashcardBack.classList.add('hidden');
+    
+            // Switch to flashcard tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab')[1].classList.add('active');
+            editor.classList.add('hidden');
+            filesView.classList.add('hidden');
+            flashcardView.classList.remove('hidden');
+    
         } catch (err) {
-            if (chatMessages.lastChild) chatMessages.lastChild.remove();
-            alert("Failed to generate quiz: " + err.message);
+            console.error("Flashcard Error:", err);
+            alert("Failed to generate flashcard. Try again with a simpler prompt.");
         }
     });
 
