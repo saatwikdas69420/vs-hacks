@@ -17,24 +17,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     // --- 2. Google Classroom Sync Function ---
     async function syncGoogleClassroomAssignments() {
         const providerToken = session.provider_token; 
-        if (!providerToken) return;
-
+        if (!providerToken) {
+            console.warn("No Google OAuth provider_token found in session.");
+            return;
+        }
+    
         try {
             const coursesRes = await fetch('https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE', {
                 headers: { Authorization: `Bearer ${providerToken}` }
             });
             const coursesData = await coursesRes.json();
             if (!coursesData.courses) return;
-
-            // CLEAR old assignments to avoid duplicates and bypass constraint errors
+    
+            // Clear old records to prevent duplicate key errors
             await supabaseClient.from('assignments').delete().eq('user_id', user.id);
-
+    
             for (const course of coursesData.courses) {
                 const workRes = await fetch(`https://classroom.googleapis.com/v1/courses/${course.id}/courseWork`, {
                     headers: { Authorization: `Bearer ${providerToken}` }
                 });
                 const workData = await workRes.json();
-
+    
                 if (workData.courseWork) {
                     for (const work of workData.courseWork) {
                         let dueDay = 'monday';
@@ -42,7 +45,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                             const dateObj = new Date(work.dueDate.year, work.dueDate.month - 1, work.dueDate.day);
                             dueDay = dateObj.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
                         }
-                        // INSERT fresh assignments
                         await supabaseClient.from('assignments').insert([{
                             user_id: user.id,
                             title: `${course.name}: ${work.title}`,
@@ -54,7 +56,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
             }
         } catch (err) {
-            console.error("Failed to sync Google Classroom:", err);
+            console.error("Google Classroom Sync Error:", err);
         }
     }
 
@@ -78,11 +80,17 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <button id="connect-classroom-btn" class="btn btn-secondary btn-full">Connect Google Classroom</button>
             </li>
         `;
+        // fixed version
         document.getElementById('connect-classroom-btn').addEventListener('click', async () => {
             await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    scopes: 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me.readonly',
+                    // Added student-submissions scope
+                    scopes: 'https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me.readonly https://www.googleapis.com/auth/classroom.student-submissions.me.readonly',
+                    queryParams: {
+                        access_type: 'offline', // Keeps token valid across sessions
+                        prompt: 'consent'
+                    },
                     redirectTo: `${window.location.origin}/m-dashboard.html`
                 }
             });
