@@ -16,9 +16,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // --- 2. Google Classroom Sync Function ---
     async function syncGoogleClassroomAssignments() {
-        const providerToken = session.provider_token; 
+        // Save token if present in current session payload
+        if (session.provider_token) {
+            localStorage.setItem('google_provider_token', session.provider_token);
+        }
+    
+        // Retrieve token from session OR local storage
+        const providerToken = session.provider_token || localStorage.getItem('google_provider_token');
+    
         if (!providerToken) {
-            console.warn("No Google OAuth provider_token found in session.");
+            console.warn("No Google OAuth provider_token found.");
             return;
         }
     
@@ -60,8 +67,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-    // Trigger sync if we just logged in via Google
-    if (session.provider_token) {
+    // Trigger sync if token exists in session or local storage
+    if (session.provider_token || localStorage.getItem('google_provider_token')) {
         await syncGoogleClassroomAssignments();
     }
 
