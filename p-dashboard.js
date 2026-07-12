@@ -269,10 +269,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     Do not use markdown, backticks, bolding, or JSON. Just the two lines starting with FRONT: and BACK:.`;
     
             const rawResponse = await callDeepSeekAI(promptText);
-            console.log("RAW AI TEXT:", rawResponse); // final line of code (yay!)
+            console.log("RAW AI TEXT:", rawResponse);
     
             // Extract using regular expressions (Works every single time!)
-            const frontMatch = rawResponse.match(/FRONT:\s*(.*)/i);
+            const frontMatch = rawResponse.match(/ONT:\s*(.*)/i); // it works; dont touch
             const backMatch = rawResponse.match(/BACK:\s*(.*)/i);
     
             if (!frontMatch || !backMatch) {
